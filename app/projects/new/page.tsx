@@ -16,6 +16,37 @@ import { useRouter } from "next/navigation"
 import { MainNav } from "@/components/main-nav"
 import { PageHeader } from "@/components/page-header"
 
+// Tipos para as interfaces
+interface Document {
+  id: number
+  name: string
+  dueDate: string
+}
+
+interface Disciplina {
+  id: number
+  name: string
+  documents: Document[]
+  destinatarios: {
+    cliente: number[]
+    fornecedor: number[]
+    interno: number[]
+  }
+}
+
+interface Milestone {
+  id: number
+  name: string
+  description: string
+  dueDate: string
+}
+
+interface User {
+  id: number
+  name: string
+  email: string
+}
+
 export default function NewProjectPage() {
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
@@ -32,7 +63,7 @@ export default function NewProjectPage() {
   })
 
   // Disciplinas com documentos e destinatários
-  const [disciplinas, setDisciplinas] = useState([
+  const [disciplinas, setDisciplinas] = useState<Disciplina[]>([
     {
       id: 1,
       name: "Civil",
@@ -62,7 +93,7 @@ export default function NewProjectPage() {
   ])
 
   // Marcos contratuais
-  const [milestones, setMilestones] = useState([
+  const [milestones, setMilestones] = useState<Milestone[]>([
     {
       id: 1,
       name: "Entrega Inicial",
@@ -72,7 +103,7 @@ export default function NewProjectPage() {
   ])
 
   // Usuários disponíveis por grupo
-  const [userGroups] = useState({
+  const [userGroups] = useState<Record<string, User[]>>({
     cliente: [
       { id: 1, name: "João Silva", email: "joao@empresaabc.com" },
       { id: 2, name: "Maria Santos", email: "maria@empresaabc.com" },
@@ -132,7 +163,7 @@ export default function NewProjectPage() {
 
   // Funções para gerenciar disciplinas
   const addDisciplina = () => {
-    const newDisciplina = {
+    const newDisciplina: Disciplina = {
       id: Date.now(),
       name: "",
       documents: [],
@@ -149,7 +180,7 @@ export default function NewProjectPage() {
     setDisciplinas(disciplinas.filter((d) => d.id !== id))
   }
 
-  const updateDisciplina = (id: number, field: string, value: any) => {
+  const updateDisciplina = (id: number, field: keyof Disciplina, value: any) => {
     setDisciplinas(disciplinas.map((d) => (d.id === id ? { ...d, [field]: value } : d)))
   }
 
@@ -158,7 +189,7 @@ export default function NewProjectPage() {
     setDisciplinas(
       disciplinas.map((d) => {
         if (d.id === disciplinaId) {
-          const newDoc = {
+          const newDoc: Document = {
             id: Date.now(),
             name: "",
             dueDate: "",
@@ -181,7 +212,7 @@ export default function NewProjectPage() {
     )
   }
 
-  const updateDocument = (disciplinaId: number, docId: number, field: string, value: string) => {
+  const updateDocument = (disciplinaId: number, docId: number, field: keyof Document, value: string) => {
     setDisciplinas(
       disciplinas.map((d) => {
         if (d.id === disciplinaId) {
@@ -196,7 +227,7 @@ export default function NewProjectPage() {
   }
 
   // Funções para gerenciar destinatários
-  const toggleDestinatario = (disciplinaId: number, groupType: string, userId: number) => {
+  const toggleDestinatario = (disciplinaId: number, groupType: keyof Disciplina["destinatarios"], userId: number) => {
     setDisciplinas(
       disciplinas.map((d) => {
         if (d.id === disciplinaId) {
@@ -220,7 +251,7 @@ export default function NewProjectPage() {
 
   // Funções para marcos contratuais
   const addMilestone = () => {
-    const newMilestone = {
+    const newMilestone: Milestone = {
       id: Date.now(),
       name: "",
       description: "",
@@ -233,7 +264,7 @@ export default function NewProjectPage() {
     setMilestones(milestones.filter((m) => m.id !== id))
   }
 
-  const updateMilestone = (id: number, field: string, value: string) => {
+  const updateMilestone = (id: number, field: keyof Milestone, value: string) => {
     setMilestones(milestones.map((m) => (m.id === id ? { ...m, [field]: value } : m)))
   }
 
@@ -453,8 +484,18 @@ export default function NewProjectPage() {
                                 <div key={user.id} className="flex items-center space-x-2">
                                   <Checkbox
                                     id={`disciplina-${disciplina.id}-${groupType}-${user.id}`}
-                                    checked={disciplina.destinatarios[groupType]?.includes(user.id) || false}
-                                    onCheckedChange={() => toggleDestinatario(disciplina.id, groupType, user.id)}
+                                    checked={
+                                      disciplina.destinatarios[
+                                        groupType as keyof Disciplina["destinatarios"]
+                                      ]?.includes(user.id) || false
+                                    }
+                                    onCheckedChange={() =>
+                                      toggleDestinatario(
+                                        disciplina.id,
+                                        groupType as keyof Disciplina["destinatarios"],
+                                        user.id,
+                                      )
+                                    }
                                   />
                                   <Label
                                     htmlFor={`disciplina-${disciplina.id}-${groupType}-${user.id}`}
